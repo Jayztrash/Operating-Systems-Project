@@ -1,0 +1,25 @@
+private static void roundRobinScheduling(int quantum) {
+        Queue<Process> queue = new LinkedList<>(processList);
+        int time = 0, totalWT = 0, totalTAT = 0;
+        
+        System.out.print("Gantt Chart: ");
+        while (!queue.isEmpty()) {
+            Process p = queue.poll();
+            if (p.burstTime > quantum) {
+                System.out.print("| P" + p.pid + " ");
+                time += quantum;
+                p.burstTime -= quantum;
+                queue.add(p);
+            } else {
+                System.out.print("| P" + p.pid + " ");
+                time += p.burstTime;
+                p.turnaroundTime = time - p.arrivalTime;
+                p.waitingTime = p.turnaroundTime - p.burstTime;
+                totalWT += p.waitingTime;
+                totalTAT += p.turnaroundTime;
+            }
+        }
+        System.out.println("|");
+        
+        printMetrics(totalWT, totalTAT);
+    }
