@@ -17,4 +17,17 @@ private static void readProcessData(String fileName) {
             System.err.println("Error reading file: " + e.getMessage());
         }
     }
+ private static void fcfsScheduling() {
+        processList.sort(Comparator.comparingInt(p -> p.arrivalTime));
+        executeScheduling();
+    }
 
+    private static void sjfScheduling() {
+        processList.sort(Comparator.comparingInt(p -> p.burstTime));
+        executeScheduling();
+    }
+
+    private static void priorityScheduling() {
+        processList.sort(Comparator.comparingInt(p -> p.priority));
+        executeScheduling();
+    }
