@@ -1,3 +1,4 @@
+// runs simulation
 public class Main {
     public static void main(String[] args) {
         if (args.length < 2) {
@@ -8,8 +9,10 @@ public class Main {
         String filename = args[0];
         String algorithm = args[1];
 
+        // reads process data from file
         Scheduler.readProcessData(filename);
 
+        // chooses scheduling algorithm
         switch (algorithm.toLowerCase()) {
             case "fcfs":
                 Scheduler.fcfsScheduling();
