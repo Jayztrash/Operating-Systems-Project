@@ -1,8 +1,11 @@
-class Process {
+import java.util.*;
+
+public class Process {
     int pid;
     int arrivalTime;
     int burstTime;
     int priority;
+    int remainingTime; 
     int waitingTime;
     int turnaroundTime;
 
@@ -11,5 +14,7 @@ class Process {
         this.arrivalTime = arrivalTime;
         this.burstTime = burstTime;
         this.priority = priority;
+        this.remainingTime = burstTime; 
     }
 }
+
