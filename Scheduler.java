@@ -7,7 +7,7 @@ public class Scheduler {
         processList = ProcessReader.readProcesses(fileName);
     }
 
-    
+     // FCFS Scheduling
     public static void fcfsScheduling() {
         processList.sort(Comparator.comparingInt(p -> p.arrivalTime));
 
@@ -20,13 +20,13 @@ public class Scheduler {
             p.waitingTime = time - p.arrivalTime;
             p.turnaroundTime = p.waitingTime + p.burstTime;
 
-            
+            // prints gantt chart
             System.out.print(" P" + p.pid + " |");
             time += p.burstTime;
         }
         System.out.println();
 
-        
+        // prints time
         time = 0;
         System.out.print("0");
         for (Process p : processList) {
@@ -35,7 +35,7 @@ public class Scheduler {
         }
         System.out.println("\n");
 
-        
+        // prints time details
         System.out.println("Process\tWT\tTAT");
         int totalWT = 0, totalTAT = 0;
         for (Process p : processList) {
@@ -44,12 +44,12 @@ public class Scheduler {
             totalTAT += p.turnaroundTime;
         }
 
-        
+        // prints the 2 averages we need
         System.out.printf("\nAverage WT: %.2f\n", (double) totalWT / processList.size());
         System.out.printf("Average TAT: %.2f\n", (double) totalTAT / processList.size());
     }
 
-    
+    // rr scheduling
     public static void roundRobinScheduling(int timeQuantum) {
         Queue<Process> queue = new LinkedList<>(processList);
         int time = 0;
@@ -60,7 +60,7 @@ public class Scheduler {
 
         while (!queue.isEmpty()) {
             Process p = queue.poll();
-
+            
             if (p.remainingTime > timeQuantum) {
                 time += timeQuantum;
                 p.remainingTime -= timeQuantum;
@@ -76,7 +76,7 @@ public class Scheduler {
             }
         }
 
-        
+        // prints chart
         System.out.println("Gantt Chart:");
         System.out.print("|");
         for (String p : ganttChart) {
@@ -93,7 +93,7 @@ public class Scheduler {
         }
         System.out.println("\n");
 
-        
+        // prints details
         System.out.println("Process\tWT\tTAT");
         int totalWT = 0, totalTAT = 0;
         for (Process p : processList) {
@@ -102,7 +102,7 @@ public class Scheduler {
             totalTAT += p.turnaroundTime;
         }
 
-        
+        // prints averages
         System.out.printf("\nAverage WT: %.2f\n", (double) totalWT / processList.size());
         System.out.printf("Average TAT: %.2f\n", (double) totalTAT / processList.size());
     }
