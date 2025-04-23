@@ -1,7 +1,8 @@
 public class ProcessThread extends Thread {
-    private int pid;
-    private int burstTime;
+    private int pid;        
+    private int burstTime;  
 
+    // initialize process info
     public ProcessThread(int pid, int burstTime) {
         this.pid = pid;
         this.burstTime = burstTime;
@@ -10,12 +11,14 @@ public class ProcessThread extends Thread {
     @Override
     public void run() {
         System.out.println("Process " + pid + " started. Burst Time: " + burstTime + "s");
+        
+        // simulate cpu burst with sleep
         try {
-            // cpu burst similation
             Thread.sleep(burstTime * 1000); 
         } catch (InterruptedException e) {
             System.out.println("Process " + pid + " was interrupted.");
         }
+
         System.out.println("Process " + pid + " finished.");
     }
 }
