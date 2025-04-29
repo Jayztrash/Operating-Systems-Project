@@ -1,44 +1,138 @@
-import java.io.File;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
-// reads process data and simulates each process as a thread
 public class ThreadSimulator {
-    public static void main(String[] args) {
-        List<ProcessThread> threads = new ArrayList<>();
+    public static void main(String[] args) throws InterruptedException {
+        final int bufferSize = 5;
+        final int numProducers = 2;
+        final int numConsumers = 2;
+        final int itemsPerProducer = 10;
 
-        // reads from processes.txt file
-        try (Scanner scanner = new Scanner(new File("processes.txt"))) {
-            if (scanner.hasNextLine()) scanner.nextLine(); // Skip the header line
+        BoundedBuffer<Integer> buffer = new BoundedBuffer<>(bufferSize);
+        List<Thread> threads = new ArrayList<>();
 
-            while (scanner.hasNextLine()) {
-                // splits each line into parts
-                String[] parts = scanner.nextLine().trim().split("\\s+");
-                if (parts.length >= 3) {
-                    int pid = Integer.parseInt(parts[0]);
-                    int arrivalTime = Integer.parseInt(parts[1]); // Not used in this simulation
-                    int burstTime = Integer.parseInt(parts[2]);
-
-                    // creates and starts a new thread for the process
-                    ProcessThread thread = new ProcessThread(pid, burstTime);
-                    threads.add(thread);
-                    thread.start();
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("Error reading file: " + e.getMessage());
+        // start producers
+        for (int i = 1; i <= numProducers; i++) {
+            Thread producer = new Producer(buffer, itemsPerProducer, i);
+            threads.add(producer);
+            producer.start();
         }
 
-        // waits for all threads to finish
-        for (ProcessThread t : threads) {
-            try {
-               
-                // waits for a single thread to finish
-                t.join();
-            } catch (InterruptedException e) {
-                System.out.println("Thread interrupted: " + t.getName());
-            }
+        // start consumers
+        for (int i = 1; i <= numConsumers; i++) {
+            Thread consumer = new Consumer(buffer, itemsPerProducer, i);
+            threads.add(consumer);
+            consumer.start();
+        }
+
+        // wait for all to finish
+        for (Thread t : threads) {
+            t.join();
         }
 
         System.out.println("All processes completed.");
+    }
+
+    // buffer using semaphores and mutex
+    static class BoundedBuffer<T> {
+        private final T[] buffer;
+        private int putPtr = 0, takePtr = 0, count = 0;
+        private final Semaphore mutex = new Semaphore(1);
+        private final Semaphore items;
+        private final Semaphore spaces;
+
+        @SuppressWarnings("unchecked")
+        public BoundedBuffer(int capacity) {
+            buffer = (T[]) new Object[capacity];
+            items = new Semaphore(0);
+            spaces = new Semaphore(capacity);
+        }
+
+        public void put(T item) throws InterruptedException {
+            System.out.printf("[%s] Waiting for space...%n", Thread.currentThread().getName());
+            spaces.acquire();
+            System.out.printf("[%s] Acquired space.%n", Thread.currentThread().getName());
+
+            mutex.acquire();
+            System.out.printf("[%s] Acquired mutex to put.%n", Thread.currentThread().getName());
+
+            buffer[putPtr] = item;
+            putPtr = (putPtr + 1) % buffer.length;
+            count++;
+            System.out.printf("[%s] Put item %s. Buffer size: %d%n", Thread.currentThread().getName(), item, count);
+
+            mutex.release();
+            System.out.printf("[%s] Released mutex after put.%n", Thread.currentThread().getName());
+
+            items.release();
+        }
+
+        public T take() throws InterruptedException {
+            System.out.printf("[%s] Waiting for items...%n", Thread.currentThread().getName());
+            items.acquire();
+            System.out.printf("[%s] Acquired item permit.%n", Thread.currentThread().getName());
+
+            mutex.acquire();
+            System.out.printf("[%s] Acquired mutex to take.%n", Thread.currentThread().getName());
+
+            T item = buffer[takePtr];
+            takePtr = (takePtr + 1) % buffer.length;
+            count--;
+            System.out.printf("[%s] Took item %s. Buffer size: %d%n", Thread.currentThread().getName(), item, count);
+
+            mutex.release();
+            System.out.printf("[%s] Released mutex after take.%n", Thread.currentThread().getName());
+
+            spaces.release();
+            return item;
+        }
+    }
+
+    static class Producer extends Thread {
+        private final BoundedBuffer<Integer> buffer;
+        private final int itemsToProduce;
+
+        public Producer(BoundedBuffer<Integer> buffer, int itemsToProduce, int id) {
+            super("Producer-" + id);
+            this.buffer = buffer;
+            this.itemsToProduce = itemsToProduce;
+        }
+
+        @Override
+        public void run() {
+            for (int i = 1; i <= itemsToProduce; i++) {
+                try {
+                    buffer.put(i);
+                    Thread.sleep(500); // simulate work
+                } catch (InterruptedException e) {
+                    System.out.printf("[%s] Interrupted.%n", getName());
+                }
+            }
+            System.out.printf("[%s] Finished producing.%n", getName());
+        }
+    }
+
+    static class Consumer extends Thread {
+        private final BoundedBuffer<Integer> buffer;
+        private final int itemsToConsume;
+
+        public Consumer(BoundedBuffer<Integer> buffer, int itemsToConsume, int id) {
+            super("Consumer-" + id);
+            this.buffer = buffer;
+            this.itemsToConsume = itemsToConsume;
+        }
+
+        @Override
+        public void run() {
+            for (int i = 1; i <= itemsToConsume; i++) {
+                try {
+                    buffer.take();
+                    Thread.sleep(800); // simulate work
+                } catch (InterruptedException e) {
+                    System.out.printf("[%s] Interrupted.%n", getName());
+                }
+            }
+            System.out.printf("[%s] Finished consuming.%n", getName());
+        }
     }
 }

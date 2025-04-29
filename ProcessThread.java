@@ -1,6 +1,5 @@
 public class ProcessThread extends Thread {
-    private int pid;        
-    private int burstTime;  
+    int pid, burstTime;
 
     // initialize process info
     public ProcessThread(int pid, int burstTime) {
